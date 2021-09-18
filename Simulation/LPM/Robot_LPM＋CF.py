@@ -25,13 +25,14 @@ def Initialize():
     Ft = 40000  #: terminal frequency [Hz]
     Duration =0.008 #LPM_duration [s]
     Duration_CF =0.002 # CF_duration [s]
+    Duration_space=0.0001
     
     draw_tx_spc_flg=True
     draw_Acor_flg=True
     draw_tx_FFT_flg=True
     print("ok!")
     
-    return Fs,FFT_Smpl,Amplitude,Fi,Ft,Duration,Duration_CF,draw_tx_spc_flg,draw_Acor_flg,draw_tx_FFT_flg
+    return Fs,FFT_Smpl,Amplitude,Fi,Ft,Duration,Duration_CF,Duration_space,draw_tx_spc_flg,draw_Acor_flg,draw_tx_FFT_flg
     
 #位相を出している？
 def LPM_model_h(fs, fi, ft, dur, t):
@@ -120,7 +121,7 @@ def draw_spectrogram(fig_name, x_data, y_data, z_color, f_init, f_termin, val):
     plt.close()
     
 
-def tx_design_view(fs, FFT_smpl, Amp, fi, ft, duration, duration_CF, draw_tx_spc_flg, draw_Acor_flg, draw_tx_FFT_flg):
+def tx_design_view(fs, FFT_smpl, Amp, fi, ft, duration, duration_CF,duration_space,draw_tx_spc_flg, draw_Acor_flg, draw_tx_FFT_flg):
 
     Ts=1.0/fs #[s]
     t_start = 0.0
@@ -128,18 +129,23 @@ def tx_design_view(fs, FFT_smpl, Amp, fi, ft, duration, duration_CF, draw_tx_spc
     
     ######################################
     ##保存場所
-    dataDir = pathlib.Path('Output/')
+    dataDir = pathlib.Path('Output/AddSpace')
         
     ###### LPM_FM + CF_ver ######
 
     ###### transmit_phase(txphase_CF)_and_reference_phase(txphase)_calclation ######    
     n_dur=int(duration/Ts)+1
     n_dur_CF=int(duration_CF/Ts)+1
+    n_dur_space=int(duration_space/Ts)+1
+
+    phase_space=t_array[n_dur:n_dur+n_dur_space]
     txphase = LPM_model_h(fs, fi, ft, duration, t_array[:n_dur])
-    txphase_CF = CF_add(fs, ft, t_array[n_dur:n_dur+n_dur_CF])
+    txphase_space=np.zeros(len(phase_space))
+    txphase_CF = CF_add(fs, ft, t_array[n_dur_space:n_dur_space+n_dur_CF])
     
     ##LPM と　CFの位相を結合
-    txphase_CF=np.hstack([txphase,txphase_CF])
+    txphase_space=np.hstack([txphase,txphase_space])
+    txphase_CF=np.hstack([txphase_space,txphase_CF])
     ###### transmit_wave(txwv_CF)_and_reference_wave(txwv)_calclation######    
     txwv = trans_wv(txphase)
     txwv = zero_filled(txwv, t_array)
@@ -171,16 +177,16 @@ def tx_design_view(fs, FFT_smpl, Amp, fi, ft, duration, duration_CF, draw_tx_spc
         txspc = np.abs(fft(txwv))
         txspc_CF = np.abs(fft(txwv_CF))
         f_array = np.linspace(0, fs, len(txwv))
-        draw_spctrm("spectrum_tx", txspc, f_array/1000, 0, max(txspc_CF), 0, fs/10000, fi, ft, dataDir)
-        draw_spctrm("spectrum_tx_CF", txspc_CF, f_array/1000, 0, max(txspc_CF), 0, fs/10000, fi, ft, dataDir)
+        draw_spctrm("spectrum_tx", txspc, f_array/1000, 0, 2000, 0, fs/10000, fi, ft, dataDir)
+        draw_spctrm("spectrum_tx_CF", txspc_CF, f_array/1000, 0, 2000, 0, fs/10000, fi, ft, dataDir)
   
     print("good")
     #return t_array, txwv, txwv_CF
 
 def main():
-    Fs,FFT_Smpl,Amplitude,Fi,Ft,Duration,Duration_CF,draw_tx_spc_flg,draw_Acor_flg,draw_tx_FFT_flg=Initialize()
+    Fs,FFT_Smpl,Amplitude,Fi,Ft,Duration,Duration_CF,Duration_space,draw_tx_spc_flg,draw_Acor_flg,draw_tx_FFT_flg=Initialize()
     
-    tx_design_view(Fs, FFT_Smpl, Amplitude, Fi, Ft, Duration, Duration_CF, True, True, True)
+    tx_design_view(Fs, FFT_Smpl, Amplitude, Fi, Ft, Duration, Duration_CF,Duration_space, True,True,True)
 
 if __name__ == '__main__':
     main()
