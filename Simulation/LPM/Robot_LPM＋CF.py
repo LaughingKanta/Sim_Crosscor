@@ -171,8 +171,8 @@ def tx_design_view(fs, FFT_smpl, Amp, fi, ft, duration, duration_CF, draw_tx_spc
         txspc = np.abs(fft(txwv))
         txspc_CF = np.abs(fft(txwv_CF))
         f_array = np.linspace(0, fs, len(txwv))
-        draw_spctrm("spectrum_tx", txspc, f_array/1000, 0, max(txspc_CF), 0, fs/10000, fi, ft, dataDir)
-        draw_spctrm("spectrum_tx_CF", txspc_CF, f_array/1000, 0, max(txspc_CF), 0, fs/10000, fi, ft, dataDir)
+        draw_spctrm("spectrum_tx", txspc, f_array/1000, 0, 2000, 0, fs/10000, fi, ft, dataDir)
+        draw_spctrm("spectrum_tx_CF", txspc_CF, f_array/1000, 0, 2000, 0, fs/10000, fi, ft, dataDir)
   
     print("good")
     #return t_array, txwv, txwv_CF
