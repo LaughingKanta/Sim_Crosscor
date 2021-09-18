@@ -23,8 +23,8 @@ def Initialize():
     Amplitude = 32767. / 2.   #pulse Amplitude: 
     Fi = 80000    #: initial frequency [Hz]
     Ft = 40000  #: terminal frequency [Hz]
-    Duration =0.008 #LPM_duration [s]
-    Duration_CF =0.002 # CF_duration [s]
+    Duration =0.0075 #LPM_duration [s]
+    Duration_CF =0.0025 # CF_duration [s]
     Duration_space=0.0001
     
     draw_tx_spc_flg=True
