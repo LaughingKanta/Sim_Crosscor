@@ -187,7 +187,7 @@ def tx_design_view(fs, FFT_smpl, Amp, fi, ft, duration, duration_CF,Duration_mim
         Acor_env_tx_FM = Xcor_func(t_array, txwv_FM, txwv_FM)
         draw_wv("Acor", t_array, Acor_env_tx, min(t_array), max(t_array), min(Acor_env_tx)*1.1, max(Acor_env_tx)*1.1, fi, ft, dataDir)
         draw_wv("Acor_CF", t_array, Acor_env_tx_CF, min(t_array), max(t_array), min(Acor_env_tx_CF)*1.1, max(Acor_env_tx_CF)*1.1, fi, ft, dataDir)
-        draw_wv("Acor_CF", t_array, Acor_env_tx_FM, min(t_array), max(t_array), min(Acor_env_tx_FM)*1.1, max(Acor_env_tx_FM)*1.1, fi, ft, dataDir)
+        draw_wv("Acor_FM", t_array, Acor_env_tx_FM, min(t_array), max(t_array), min(Acor_env_tx_FM)*1.1, max(Acor_env_tx_FM)*1.1, fi, ft, dataDir)
         
     ##### tx_spectram(FFT)_draw ###############
     ###### transmit_wave("spectrum_tx")_and_reference_wave("spectrum_tx_CF")_draw######    
