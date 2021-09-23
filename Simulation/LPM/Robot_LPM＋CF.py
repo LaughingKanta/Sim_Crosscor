@@ -14,11 +14,12 @@ from scipy.signal import hilbert
 import scipy.signal as signal
 import pathlib
 import math
+import tkinter
 
 def Initialize():
     #sensing_setting
     Fs=1000000 #[Hz]sampling_f
-    FFT_Smpl=2**15 #Number_of_samplings_for_sensing[smpls]
+    FFT_Smpl=2**17 #Number_of_samplings_for_sensing[smpls]
     
     #pulse_design_setting
     Amplitude = 32767. / 2.   #pulse Amplitude: 
@@ -26,12 +27,13 @@ def Initialize():
     Ft = 40000  #: terminal frequency [Hz]
     Duration =0.0075 #LPM_duration [s]
     Duration_CF =0.0025 # CF_duration [s]
+    Duration_space=0.01
     Duration_mimic=0.01#mimicFM_duration[s]
     BatcallConstant=0.005#パラメータ
     draw_tx_spc_flg=True
     draw_Acor_flg=True
     draw_tx_FFT_flg=True   
-    return Fs,FFT_Smpl,Amplitude,Fi,Ft,Duration,Duration_CF,Duration_mimic,BatcallConstant,draw_tx_spc_flg,draw_Acor_flg,draw_tx_FFT_flg
+    return Fs,FFT_Smpl,Amplitude,Fi,Ft,Duration,Duration_CF,Duration_mimic,Duration_space,BatcallConstant,draw_tx_spc_flg,draw_Acor_flg,draw_tx_FFT_flg
     
 #位相を出している？
 def LPM_model_h(fs, fi, ft, dur, t):
@@ -120,19 +122,21 @@ def draw_spectrogram(fig_name, x_data, y_data, z_color, f_init, f_termin, val):
     y_max=100
     f=plt.figure(figsize=(8.0, 8.0))
     plt.pcolormesh(x_data, y_data, z_color, cmap="GnBu")
-    plt.title(r"$ f_i$ = {} kHz  $f_t$ = {} kHz".format(str(int(f_init/1000)), str(int(f_termin/1000))))
+    #plt.title(r"$ f_i$ = {} kHz  $f_t$ = {} kHz".format(str(int(f_init/1000)), str(int(f_termin/1000))))
     plt.xlim([0,max(x_data)])
     plt.ylim([0,y_max])
     plt.xlabel("Time [ms]")
     plt.ylabel("Frequency [kHz]")
     plt.colorbar()
-    plt.savefig(val/'{}_spctrgm{}_{}.png'.format(fig_name, str(int(f_init/1000)), str(int(f_termin/1000))))
+    #plt.savefig(val/'{}_spctrgm{}_{}.png'.format(fig_name, str(int(f_init/1000)), str(int(f_termin/1000))))
     plt.show()
     f.clear()
     plt.close()
+
+
     
 
-def tx_design_view(fs, FFT_smpl, Amp, fi, ft, duration, duration_CF,Duration_mimic,BatcallConstant, draw_tx_spc_flg, draw_Acor_flg, draw_tx_FFT_flg):
+def tx_design_view(fs, FFT_smpl, Amp, fi, ft, duration, duration_CF,Duration_mimic,duration_space,BatcallConstant, draw_tx_spc_flg, draw_Acor_flg, draw_tx_FFT_flg):
 
     Ts=1.0/fs #[s]
     t_start = 0.0
@@ -146,12 +150,26 @@ def tx_design_view(fs, FFT_smpl, Amp, fi, ft, duration, duration_CF,Duration_mim
 
     ###### transmit_phase(txphase_CF)_and_reference_phase(txphase)_calclation ######    
     n_dur=int(duration/Ts)+1
+    n_dur_space=int(duration_space/Ts)+1
     n_dur_CF=int(duration_CF/Ts)+1
     txphase = LPM_model_h(fs, fi, ft, duration, t_array[:n_dur])
     txphase_CF = CF_add(fs, ft, t_array[n_dur:n_dur+n_dur_CF])
+    phase_space=t_array[n_dur+n_dur_CF:n_dur_space]
+    txphase_space=np.zeros(len(phase_space))
+    txphase_2 = LPM_model_h(fs, fi, ft+1000, duration, t_array[n_dur_space:n_dur_space+n_dur])
+    txphase_CF_2 = CF_add(fs, ft+1000, t_array[n_dur+n_dur_space:n_dur_space+n_dur+n_dur_CF])
+    phase_space_2=t_array[n_dur_space+n_dur+n_dur_CF:2*n_dur_space]
+    txphase_space_2=np.zeros(len(phase_space_2))
+
+    
+
     
     ##LPM と　CFの位相を結合
     txphase_CF=np.hstack([txphase,txphase_CF])
+    txphase_CF=np.hstack([txphase_CF,txphase_space])
+    txphase_CF=np.hstack([txphase_CF,txphase_2])
+    txphase_CF=np.hstack([txphase_CF,txphase_CF_2])
+    txphase_CF=np.hstack([txphase_CF,txphase_space_2])
     ###### transmit_wave(txwv_CF)_and_reference_wave(txwv)_calclation######    
     txwv = trans_wv(txphase)
     txwv = zero_filled(txwv, t_array)
@@ -185,10 +203,11 @@ def tx_design_view(fs, FFT_smpl, Amp, fi, ft, duration, duration_CF,Duration_mim
         Acor_env_tx = Xcor_func(t_array, txwv, txwv)
         Acor_env_tx_CF = Xcor_func(t_array, txwv_CF, txwv_CF)
         Acor_env_tx_FM = Xcor_func(t_array, txwv_FM, txwv_FM)
+        Xcor_env_tx=Xcor_func(t_array,txwv, txwv_CF)
         draw_wv("Acor", t_array, Acor_env_tx, min(t_array), max(t_array), min(Acor_env_tx)*1.1, max(Acor_env_tx)*1.1, fi, ft, dataDir)
         draw_wv("Acor_CF", t_array, Acor_env_tx_CF, min(t_array), max(t_array), min(Acor_env_tx_CF)*1.1, max(Acor_env_tx_CF)*1.1, fi, ft, dataDir)
         draw_wv("Acor_FM", t_array, Acor_env_tx_FM, min(t_array), max(t_array), min(Acor_env_tx_FM)*1.1, max(Acor_env_tx_FM)*1.1, fi, ft, dataDir)
-        
+        draw_wv("Xcor", t_array, Xcor_env_tx, min(t_array), max(t_array), min(Xcor_env_tx)*1.1, max(Xcor_env_tx)*1.1, fi, ft, dataDir)
     ##### tx_spectram(FFT)_draw ###############
     ###### transmit_wave("spectrum_tx")_and_reference_wave("spectrum_tx_CF")_draw######    
     if draw_tx_FFT_flg==1:
@@ -204,9 +223,9 @@ def tx_design_view(fs, FFT_smpl, Amp, fi, ft, duration, duration_CF,Duration_mim
     #return t_array, txwv, txwv_CF
 
 def main():
-    Fs,FFT_Smpl,Amplitude,Fi,Ft,Duration,Duration_CF,Duration_mimic,BatcallConstant,draw_tx_spc_flg,draw_Acor_flg,draw_tx_FFT_flg=Initialize()
+    Fs,FFT_Smpl,Amplitude,Fi,Ft,Duration,Duration_CF,Duration_mimic,Duration_space,BatcallConstant,draw_tx_spc_flg,draw_Acor_flg,draw_tx_FFT_flg=Initialize()
     
-    tx_design_view(Fs, FFT_Smpl, Amplitude, Fi, Ft, Duration, Duration_CF,Duration_mimic,BatcallConstant, True, True, True)
+    tx_design_view(Fs, FFT_Smpl, Amplitude, Fi, Ft, Duration, Duration_CF,Duration_mimic,Duration_space,BatcallConstant, True, True, True)
 
 if __name__ == '__main__':
     main()
