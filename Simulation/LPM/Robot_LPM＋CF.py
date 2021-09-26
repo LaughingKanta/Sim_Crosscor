@@ -18,7 +18,7 @@ import math
 def Initialize():
     #sensing_setting
     Fs=1000000 #[Hz]sampling_f
-    FFT_Smpl=2**15 #Number_of_samplings_for_sensing[smpls]
+    FFT_Smpl=2**14 #Number_of_samplings_for_sensing[smpls]
     
     #pulse_design_setting
     Amplitude = 32767. / 2.   #pulse Amplitude: 
@@ -119,7 +119,7 @@ def draw_spectrogram(fig_name, x_data, y_data, z_color, f_init, f_termin, val):
     y_data=y_data/1000
     y_max=100
     f=plt.figure(figsize=(8.0, 8.0))
-    plt.pcolormesh(x_data, y_data, z_color, cmap="GnBu")
+    plt.pcolormesh(x_data, y_data, z_color, cmap="hot")
     plt.title(r"$ f_i$ = {} kHz  $f_t$ = {} kHz".format(str(int(f_init/1000)), str(int(f_termin/1000))))
     plt.xlim([0,max(x_data)])
     plt.ylim([0,y_max])
@@ -159,8 +159,11 @@ def tx_design_view(fs, FFT_smpl, Amp, fi, ft, duration, duration_CF,Duration_mim
     txwv_CF = zero_filled(txwv_CF, t_array)
 
     ###### mimicFM create #########]
+
+    
     call=Mimic_FM_add(fi, ft, BatcallConstant, fs, Duration_mimic)
     txwv_FM=[]
+    txwv_FM=np.append(txwv_FM,np.zeros(len(txphase)))
     txwv_FM=np.append(txwv_FM,call)
     txwv_FM=np.append(txwv_FM,[0]*(FFT_smpl-(int(Duration_mimic*fs+1))))
 
@@ -172,6 +175,7 @@ def tx_design_view(fs, FFT_smpl, Amp, fi, ft, duration, duration_CF,Duration_mim
     ##### tx_spectrogram_draw ###############
     ###### transmit_wave("tx_CF")_and_reference_wave("tx")_draw######    
     if draw_tx_spc_flg==1:
+
         print(fi, ft)
         spc_f, spc_t, spc_pw = signal.spectrogram(txwv, fs, nperseg=1024, noverlap=int(1024*0.98))
         draw_spectrogram("tx", spc_t, spc_f, spc_pw, fi, ft, dataDir)   
