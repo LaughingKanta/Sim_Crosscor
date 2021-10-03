@@ -22,7 +22,7 @@ def Initialize():
     Fi = 80000    #: initial frequency [Hz]
     Ft = 40000  #: terminal frequency [Hz]
     RobotNum=6
-    Robotfreq=[40000,42000,44000,46000,48000,50000]
+    Robotfreq=[38000,39000,40000,41000,42000,43000]
     Duration =0.0075 #LPM_duration [s]
     Duration_CF =0.0025 # CF_duration [s]
     Duration_mimic=0.01#mimicFM_duration[s]
